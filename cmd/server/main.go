@@ -1,42 +1,36 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"time"
 
-	"github.com/Daffc/Go_Chat_API/configs"
-	"github.com/gin-gonic/gin"
+	"github.com/Daffc/Go_Chat_API/config"
 )
-
-func router () http.Handler {
-  
-  r := gin.New()
-  r.Use(gin.Recovery())
-  r.GET("/", func(c *gin.Context) {
-    c.JSON(
-      http.StatusOK,
-      gin.H{
-        "code": http.StatusOK,
-        "message": "Bienvenido",
-      },
-    )
-  })
-
-  return r;
-}
 
 func main() {
 
-  configs, err := configs.LoadEnv()
+  config, err := config.LoadEnv()
   if err != nil {
     log.Fatal(err);
   }
 
+  mux := http.NewServeMux()
+
+  mux.HandleFunc("GET /{$}", func (w http.ResponseWriter, r *http.Request){
+
+    for name, headers := range r.Header {
+      for _, h := range headers {
+        fmt.Fprintf(w, "%v, %v\n", name, h)
+      }
+    }
+  })
+
   log.Print("Starting Server...")
   server := &http.Server{
-    Addr: configs.Port,
-    Handler: router(),
+    Addr: config.Port,
+    Handler: mux,
     ReadTimeout: 10 * time.Second,
     WriteTimeout: 10 * time.Second,
     MaxHeaderBytes: 1 << 20,
